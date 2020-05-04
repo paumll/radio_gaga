@@ -1,0 +1,11 @@
+# MacOS folder attributes
+.DS_Store
+
+# Training data
+data/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# python's bytecode first compilation
+__pycache__
