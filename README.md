@@ -1,1 +1,1 @@
-# radio_gaga
+Please include your code on the `src` folder and create a local directory called `data`, where training data will be in. Remeber to run the scripts while inside the `src` folder.
