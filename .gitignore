@@ -1,8 +1,35 @@
 # MacOS folder attributes
 .DS_Store
 
+# Old models
+bad_models/
+
+# Old outputs
+old_outputs/
+
+# midi files
+*.mid
+
+# mp3 files
+*.mp3
+
+# Model weights
+*.pt
+
+# Zip files
+*.zip
+
+# npy files
+*.npy
+
 # Training data
 data/
+
+# VS Code
+.vscode/
+
+# XML files
+midinet/XML/
 
 # Jupyter Notebook
 .ipynb_checkpoints
