@@ -23,7 +23,7 @@ for i in range(len(data)):
         idx_test += 1
 
     midi = open(maestro_path + title, 'r')
-    path = open(maestro_path + split, 'w')
+    path = open("C:\Users\Pau\Documents\uni\maestro-v2.0.0\\" + split, 'w')
     path.write(midi)
     os.rename(maestro_path + split + title, maestro_path + split + str(idx) + '.mid')
     print("funciona")
