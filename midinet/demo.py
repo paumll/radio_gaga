@@ -29,14 +29,15 @@ def reshape_bar(song):
     print("A bar's shape: {}".format(eight_bar.shape))
     return eight_bar
 
-def make_a_track(eight_bar_binarized,track_name ='melody' ,instrument=0):
-    track = Track(pianoroll=eight_bar_binarized, program=instrument, is_drum=False,name=track_name)
+def make_a_track(eight_bar_binarized,track_name ='melody',instrument=0):
+    track = Track(pianoroll=eight_bar_binarized, program=instrument, is_drum=False)#name=track_name)
     return track
 
 def make_a_demo(track1,track2,song_idx):
     sample_name = 'sample_'+str(song_idx)
 
     multitrack = Multitrack(tracks=[track1,track2], tempo=120.0,beat_resolution=4)
+    return multitrack
     # pypiano.plot(multitrack, filepath='your file situation', mode='separate', preset='default', cmaps=None, xtick='auto', ytick='octave', xticklabel=True, yticklabel='auto', tick_loc=None, tick_direction='in', label='both', grid='both', grid_linestyle=':', grid_linewidth=0.5)
     # plt.savefig('your file situation'+sample_name+'.png')
 
@@ -105,13 +106,13 @@ def make_chord_track(chord,instrument,volume=40):
 
 
 def main():
-    data = np.load('output melody file')
-    chord = np.load('output chord file')
-    instrument = input('which instrument you want to play? from 0 to 128,default=0:')
-    volume     = input('how loud you want to play? from 1 to 127,default= 40:')
+    data = np.load('output_songs_99.npy', allow_pickle=True)
+    chord = np.load('output_chords_99.npy', allow_pickle=True)
+    instrument = int(input('which instrument you want to play? from 0 to 128,default=0:'))
+    volume     = int(input('how loud you want to play? from 1 to 127,default= 40:'))
 
     for i in range(data.shape[0]):
-        if i % 100 == 0:
+        if i % 183 == 0:
             one_song = data[i]
             song = []
             for item in one_song:
@@ -128,9 +129,9 @@ def main():
             chord_player = get_chord(song_chord)
             np.save('file/chord_'+str(i)+'.npy',chord_player)
             chord_track = make_chord_track(chord_player,instrument,volume)
-            make_a_demo(track,chord_track,i)
-            multitrack.write('file'+sample_name+'_instru:_'+instrument+'_volume:'+'.mid')
-            print(str(sample_name)+'saved')
+            a = make_a_demo(track,chord_track,i)
+            pypiano.write(a, 'baseline_99epoch.mid')
+            print('saved')
 
 
 
