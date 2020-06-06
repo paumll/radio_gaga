@@ -12,7 +12,7 @@ from ops import *
 
 
 class sample_generator(nn.Module):
-    def __init__(self):
+    def __init__(self, pitch_range):
         super(sample_generator, self).__init__()
         self.gf_dim   = 64
         self.y_dim   = 13
@@ -91,14 +91,12 @@ class generator(nn.Module):
 
     def forward(self, z, prev_x, y ,batch_size,pitch_range):
 
-        # h3_prev = F.leaky_relu(self.batch_nor_256(self.h0_prev(prev_x)),0.2)
         h0_prev = lrelu(batch_norm_2d(self.h0_prev(prev_x)),0.2)   #[72, 16, 16, 1]
         h1_prev = lrelu(batch_norm_2d(self.h1_prev(h0_prev)),0.2)  #[72, 16, 8, 1]
         h2_prev = lrelu(batch_norm_2d(self.h2_prev(h1_prev)),0.2)  #[72, 16, 4, 1]
         h3_prev = lrelu(batch_norm_2d(self.h3_prev(h2_prev)),0.2)  #[72, 16, 2, 1])
 
         yb = y.view(batch_size,  self.y_dim, 1, 1)  #(72,13,1,1)
-
         z = torch.cat((z,y),1)         #(72,113)
 
         h0 = F.relu(batch_norm_1d(self.linear1(z)))    #(72,1024)
@@ -146,7 +144,7 @@ class discriminator(nn.Module):
         yb = y.view(batch_size,self.y_dim, 1, 1)
         x = conv_cond_concat(x, yb)  #x.shape torch.Size([72, 14, 16, 128])
         
-        h0 = lrelu(self.h0_prev(x),0.2)
+        h0 = lrelu(self.h0_prev(x),0.2) # h0 shape: [72, 14, 8, 1]
         fm = h0
         h0 = conv_cond_concat(h0, yb) #torch.Size([72, 27, 8, 1])
 
