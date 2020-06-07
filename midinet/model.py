@@ -10,7 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from ops import *
 
-MODEL_NAME = 'Baseline'
+MODEL_NAME = 'Baseline_lr5e-5'
 
 class sample_generator(nn.Module):
     def __init__(self, pitch_range):
