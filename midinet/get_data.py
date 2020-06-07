@@ -79,7 +79,7 @@ def build_matrix2(note_list_all_c,dur_list_all_c, c_files):
 
     return data_x,prev_x,zero_counter
 
-def build_matrix(note_list_all_c,dur_list_all_c, chord_list_all, list_files):
+def build_matrix(note_list_all_c,dur_list_all_c, chord_list_all):
     data_x = []           
     prev_x = []
     chords = []
@@ -97,7 +97,7 @@ def build_matrix(note_list_all_c,dur_list_all_c, chord_list_all, list_files):
         np_sample = np.asarray(song_sample)
         
         if len(song_sample)*8 > len(song_chord):
-            print("Canción: {}, idx: {}".format(list_files[i], i))
+            #print("Canción: {}, idx: {}".format(list_files[i], i))
             print("Num compases: {}, acordes: {}".format(len(song_sample), len(song_chord)))
             continue
         #if i < len(c_files):
@@ -710,44 +710,45 @@ def prune_json(list_file):
 
 def data_augmentation(data, prev, chords):
     # data shape: [13987, 1, 128, 16]
-    new_data = data
-    new_prev = prev
-    new_chords = chords
+    new_data = []
+    new_prev = []
+    new_chords = []
     for i in range(len(data)):
+        print("Canción {} aumentada".format(i))
         try:
             it = np.argwhere(chords[i,:-1] == 1)[0][0] # nos quedamos con el primer 1
             for key in range(6):
-                temp = np.zeros((1,1,128,16))
-                temp[0,0, (key+1):] = data[i, 0, :-(key+1)]
-                new_data = np.concatenate((new_data, temp))
+                temp = np.zeros((1,128,16))
+                temp[0, (key+1):] = data[i, 0, :-(key+1)]
+                new_data.append(temp)
                 #print("hago new_Data concatenate: ", new_data.shape)
 
-                temp_prev = np.zeros((1,1,128,16))
-                temp_prev[0,0, (key+1):] = prev[i, 0, :-(key+1)]
-                new_prev = np.concatenate((new_prev, temp_prev))
+                temp_prev = np.zeros((1,128,16))
+                temp_prev[0, (key+1):] = prev[i, 0, :-(key+1)]
+                new_prev.append(temp_prev)
                 #print("hago new_prev concatenate: ", new_prev.shape)
 
-                temp_chord = np.zeros((1,13))
-                temp_chord[0,-1] = chords[i, -1]
+                temp_chord = np.zeros(13)
+                temp_chord[-1] = chords[i, -1]
                 it += (key+1)
-                temp_chord[0,it%12] = 1
-                new_chords = np.concatenate((new_chords, temp_chord))
+                temp_chord[it%12] = 1
+                new_chords.append(temp_chord)
                 if key < 5:
-                    temp[0,0, :-(key+1)] = data[i, 0, (key+1):]
-                    new_data = np.concatenate((new_data, temp))
+                    temp[0, :-(key+1)] = data[i, 0, (key+1):]
+                    new_data.append(temp)
 
-                    temp_prev[0,0, :-(key+1)] = prev[i, 0, (key+1):]
-                    new_prev = np.concatenate((new_prev, temp_prev))
+                    temp_prev[0, :-(key+1)] = prev[i, 0, (key+1):]
+                    new_prev.append(temp_prev)
 
                     it -= 2*(key+1)
-                    temp_chord = np.zeros((1,13))
-                    temp_chord[0,-1] = chords[i, -1]
-                    temp_chord[0,it%12] = 1
-                    new_chords = np.concatenate((new_chords, temp_chord))
+                    temp_chord = np.zeros(13)
+                    temp_chord[-1] = chords[i, -1]
+                    temp_chord[it%12] = 1
+                    new_chords.append(temp_chord)
                     it += (key+1)
         except:
             continue
-    return new_data, new_prev, new_chords
+    return np.vstack((data, new_data)), np.vstack((prev, new_prev)), np.vstack((chords, new_chords))
 
 def data_augmentation_chords(data):
     new_data = []
@@ -772,7 +773,7 @@ def data_augmentation_chords(data):
 
 
 def main():
-    is_get_data = 1
+    is_get_data = 0
     is_get_matrix = 1
     if is_get_data == 1:
         a = '..\\..\\datasets\\xml\\'
@@ -804,7 +805,7 @@ def main():
         dur_list_all_c = np.load('dur_list_all_c.npy', allow_pickle=True)
         list_all_chord = np.load('list_all_chords.npy', allow_pickle=True)
 
-        data_x, prev_x, chords, zero_counter = build_matrix(note_list_all_c,dur_list_all_c, list_all_chord, list_files)
+        data_x, prev_x, chords, zero_counter = build_matrix(note_list_all_c,dur_list_all_c, list_all_chord)#, list_files)
         print('sample shape: {}, prev sample shape: {}'.format(data_x.shape, prev_x.shape))
         print('Chord shape: {}'.format(chords.shape))
         np.save('data_x.npy',data_x)

@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import ipdb
-
+from model_mod import MODEL_NAME
 
 
 def find_pitch(song,volume=40):   # song shape(128,128), which is (time step, pitch)
@@ -106,13 +106,14 @@ def make_chord_track(chord,instrument,volume=40):
 
 
 def main():
-    data = np.load('output_songs_99.npy', allow_pickle=True)
-    chord = np.load('output_chords_99.npy', allow_pickle=True)
-    instrument = int(input('which instrument you want to play? from 0 to 128,default=0:'))
-    volume     = int(input('how loud you want to play? from 1 to 127,default= 40:'))
+    data = np.load("output_{}_songs_augmented_10.npy".format(MODEL_NAME), allow_pickle=True)
+    chord = np.load("output_{}_chords_augmented_10.npy".format(MODEL_NAME), allow_pickle=True)
+    print(chord.shape)
+    instrument = int(input('which instrument you want to play? from 0 to 128, default = 0: '))
+    volume     = int(input('how loud you want to play? from 1 to 127, default = 40: '))
 
     for i in range(data.shape[0]):
-        if i % 183 == 0:
+        if i % 50 == 0:
             one_song = data[i]
             song = []
             for item in one_song:
@@ -124,13 +125,13 @@ def main():
             eight_bar_binarized = find_pitch(eight_bar,volume)
             track = make_a_track(eight_bar_binarized,instrument)
             
-
+            print(chord.shape)
             song_chord = chord_list(chord,i)
             chord_player = get_chord(song_chord)
-            np.save('file/chord_'+str(i)+'.npy',chord_player)
+            np.save("file/{}chord_{}.npy".format(MODEL_NAME,i),chord_player)
             chord_track = make_chord_track(chord_player,instrument,volume)
             a = make_a_demo(track,chord_track,i)
-            pypiano.write(a, 'baseline_99epoch.mid')
+            pypiano.write(a, "{}_augmented_10epoch_{}.mid".format(MODEL_NAME,i))
             print('saved')
 
 

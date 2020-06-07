@@ -4,9 +4,9 @@ import math
 import time
 
 #load data
-data = np.load('data_x.npy')
-prev_data = np.load('prev_x.npy')
-chord_data = np.load('chords.npy')
+data = np.load('data_x_augmented.npy')
+prev_data = np.load('prev_x_augmented.npy')
+chord_data = np.load('chords_augmented.npy')
 print('data shape: {}'.format(data.shape))
 #time.sleep(3)
 
@@ -88,9 +88,9 @@ def test_chord(data, test_idx):
 X_te = test_data(data,test_idx)
 prev_X_te = test_data(prev_data,test_idx)
 chord_te = test_chord(chord_data,test_idx)
-np.save('X_te.npy',X_te)
-np.save('prev_X_te',prev_X_te)
-np.save('chord_te.npy', chord_te)
+np.save('X_te_augmented.npy',X_te)
+np.save('prev_X_te_augmented.npy',prev_X_te)
+np.save('chord_te_augmented.npy', chord_te)
 
 print('test song completed, X_te matrix shape: {}'.format(X_te.shape))
 
@@ -98,9 +98,9 @@ print('test song completed, X_te matrix shape: {}'.format(X_te.shape))
 X_tr = train_data(data,train_idx)
 prev_X_tr = train_data(prev_data,train_idx)
 chord_tr = train_chord(chord_data,train_idx)
-np.save('X_tr.npy',X_tr)
-np.save('prev_X_tr.npy',prev_X_tr)
-np.save('chord_tr.npy',chord_tr)
+np.save('X_tr_augmented.npy',X_tr)
+np.save('prev_X_tr_augmented.npy',prev_X_tr)
+np.save('chord_tr_augmented.npy',chord_tr)
 
 print('train song completed, X_tr matrix shape: {}'.format(X_tr.shape))
 
