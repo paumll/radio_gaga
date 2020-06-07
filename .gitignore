@@ -22,6 +22,12 @@ old_outputs/
 # npy files
 *.npy
 
+# png files
+*.png
+
+# pytorch models
+*.pth
+
 # Training data
 data/
 
