@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from ops import *
 
 
+MODEL_NAME = 'modelo1_4c'
+
 class sample_generator(nn.Module):
     def __init__(self, pitch_range):
         super(sample_generator, self).__init__()
@@ -33,7 +35,6 @@ class sample_generator(nn.Module):
 
     def forward(self, z, prev_x, y ,batch_size,pitch_range):
 
-        # h3_prev = F.leaky_relu(self.batch_nor_256(self.h0_prev(prev_x)),0.2)
         h0_prev = lrelu(batch_norm_2d_cpu(self.h0_prev(prev_x)),0.2)   #[72, 16, 16, 1]
         h1_prev = lrelu(batch_norm_2d_cpu(self.h1_prev(h0_prev)),0.2)  #[72, 16, 8, 1]
         h2_prev = lrelu(batch_norm_2d_cpu(self.h2_prev(h1_prev)),0.2)  #[72, 16, 4, 1]
@@ -132,32 +133,40 @@ class discriminator(nn.Module):
         self.dfc_dim = 1024
         self.y_dim = 13
 
-        self.h0_prev = nn.Conv2d(in_channels=14, out_channels=14, kernel_size=(2,pitch_range), stride=(2,2))
-        #out channels = y_dim +1 
-        self.h1_prev = nn.Conv2d(in_channels=27, out_channels=77, kernel_size=(4,1), stride=(2,2))
+        self.h0_prev = nn.Conv2d(in_channels=14, out_channels=14, kernel_size=(4,pitch_range), stride=(1,1)) #con acordes
+        # out channels = y_dim +1 
+        self.h1_prev = nn.Conv2d(in_channels=14, out_channels=24, kernel_size=(4,1), stride=(1,1)) #sin acordes
         # out channels = df_dim + y_dim
-        self.linear1 = nn.Linear(244,self.dfc_dim)
-        self.linear2 = nn.Linear(1037,1)
+        self.h2_prev = nn.Conv2d(in_channels=37, out_channels=51, kernel_size=(4,1), stride=(1,1)) #con acordes
 
+        self.h3_prev = nn.Conv2d(in_channels=51, out_channels=77, kernel_size=(4,1), stride=(1,1)) #sin acordes
+        self.linear1 = nn.Linear(308,self.dfc_dim)
+        self.linear2 = nn.Linear(1037,1)
+        # w' = (w-k+2p)/s + 1
+        # w = s(w'-1) + k - 2p
     def forward(self,x,y,batch_size,pitch_range):        
 
         yb = y.view(batch_size,self.y_dim, 1, 1)
         x = conv_cond_concat(x, yb)  #x.shape torch.Size([72, 14, 16, 128])
         
-        h0 = lrelu(self.h0_prev(x),0.2) # h0 shape: [72, 14, 8, 1]
+        h0 = lrelu(self.h0_prev(x),0.2) # h0 shape: [72, 14, 13, 1]
         fm = h0
-        h0 = conv_cond_concat(h0, yb) #torch.Size([72, 27, 8, 1])
+        #h0 = conv_cond_concat(h0, yb) 
 
-        h1 = lrelu(batch_norm_2d(self.h1_prev(h0)),0.2)  #torch.Size([72, 77, 3, 1])
-        h1 = h1.view(batch_size, -1)  #torch.Size([72, 231])
-        h1 = torch.cat((h1,y),1)  #torch.Size([72, 244])
+        h1 = lrelu(batch_norm_2d(self.h1_prev(h0)),0.2)  #torch.Size([72, 24, 10, 1])
+        h1 = conv_cond_concat(h1,yb)  #torch.Size([72, 37, 10, 1])
 
-        h2 = lrelu(batch_norm_1d(self.linear1(h1)))
-        h2 = torch.cat((h2,y),1)  #torch.Size([72, 1037])
+        h2 = lrelu(batch_norm_2d(self.h2_prev(h1)), 0.2) # [72, 51, 7, 1]
 
-        h3 = self.linear2(h2)
-        h3_sigmoid = torch.sigmoid(h3)
+        h3 = lrelu(batch_norm_2d(self.h3_prev(h2)),0.2) # [72, 77, 4, 1]
+        h3 = h3.view(batch_size, -1)
+        #h3 = torch.cat((h3,y),1)
+        
+        h4 = lrelu(batch_norm_1d(self.linear1(h3)), 0.2)
+        h4 = torch.cat((h4,y),1)
+        h5 = self.linear2(h4)
 
+        h5_sigmoid = torch.sigmoid(h5)
 
-        return h3_sigmoid, h3, fm
+        return h5_sigmoid, h5, fm
 
