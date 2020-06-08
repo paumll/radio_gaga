@@ -10,7 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from ops import *
 
-MODEL_NAME = 'Baseline_lr5e-5'
+MODEL_NAME = 'Baseline_lr5e-5_bn_bien'
 
 class sample_generator(nn.Module):
     def __init__(self, pitch_range):
@@ -32,35 +32,45 @@ class sample_generator(nn.Module):
         self.linear1 = nn.Linear(113,1024)
         self.linear2 = nn.Linear(1037,self.gf_dim*2*2*1)
 
+        self.bn0_prev = nn.BatchNorm2d(16, eps=1e-05, momentum=0.9, affine=True)
+        self.bn1_prev = nn.BatchNorm2d(16, eps=1e-05, momentum=0.9, affine=True)
+        self.bn2_prev = nn.BatchNorm2d(16, eps=1e-05, momentum=0.9, affine=True)
+        self.bn3_prev = nn.BatchNorm2d(16, eps=1e-05, momentum=0.9, affine=True)
+        
+        self.bn2 = nn.BatchNorm2d(128, eps=1e-05, momentum=0.9, affine=True)
+        self.bn3 = nn.BatchNorm2d(128, eps=1e-05, momentum=0.9, affine=True)
+        self.bn4 = nn.BatchNorm2d(128, eps=1e-05, momentum=0.9, affine=True)
+
+        self.bn1d_1 = nn.BatchNorm1d(1024, eps=1e-05, momentum=0.9, affine=True)
+        self.bn1d_2 = nn.BatchNorm1d(256, eps=1e-05, momentum=0.9, affine=True)
+
     def forward(self, z, prev_x, y ,batch_size,pitch_range):
 
-        # h3_prev = F.leaky_relu(self.batch_nor_256(self.h0_prev(prev_x)),0.2)
-        h0_prev = lrelu(batch_norm_2d_cpu(self.h0_prev(prev_x)),0.2)   #[72, 16, 16, 1]
-        h1_prev = lrelu(batch_norm_2d_cpu(self.h1_prev(h0_prev)),0.2)  #[72, 16, 8, 1]
-        h2_prev = lrelu(batch_norm_2d_cpu(self.h2_prev(h1_prev)),0.2)  #[72, 16, 4, 1]
-        h3_prev = lrelu(batch_norm_2d_cpu(self.h3_prev(h2_prev)),0.2)  #[72, 16, 2, 1])
+        h0_prev = lrelu(self.bn0_prev(self.h0_prev(prev_x)),0.2)   #[72, 16, 16, 1]
+        h1_prev = lrelu(self.bn1_prev(self.h1_prev(h0_prev)),0.2)  #[72, 16, 8, 1]
+        h2_prev = lrelu(self.bn2_prev(self.h2_prev(h1_prev)),0.2)  #[72, 16, 4, 1]
+        h3_prev = lrelu(self.bn3_prev(self.h3_prev(h2_prev)),0.2)  #[72, 16, 2, 1])
 
         yb = y.view(batch_size,  self.y_dim, 1, 1)  #(72,13,1,1)
-
         z = torch.cat((z,y),1)         #(72,113)
 
-        h0 = F.relu(batch_norm_1d_cpu(self.linear1(z)))    #(72,1024)
+        h0 = F.relu(self.bn1d_1(self.linear1(z)))    #(72,1024)
         h0 = torch.cat((h0,y),1)   #(72,1037)
 
-        h1 = F.relu(batch_norm_1d_cpu(self.linear2(h0)))   #(72, 256)
+        h1 = F.relu(self.bn1d_2(self.linear2(h0)))   #(72, 256)
         h1 = h1.view(batch_size, self.gf_dim * 2, 2, 1)     #(72,128,2,1)
         h1 = conv_cond_concat(h1,yb) #(b,141,2,1)
         h1 = conv_prev_concat(h1,h3_prev)  #(72, 157, 2, 1)
 
-        h2 = F.relu(batch_norm_2d_cpu(self.h1(h1)))  #(72, 128, 4, 1)
+        h2 = F.relu(self.bn2(self.h1(h1)))  #(72, 128, 4, 1)
         h2 = conv_cond_concat(h2,yb) #([72, 141, 4, 1])
         h2 = conv_prev_concat(h2,h2_prev)  #([72, 157, 4, 1])
 
-        h3 = F.relu(batch_norm_2d_cpu(self.h2(h2)))  #([72, 128, 8, 1]) 
+        h3 = F.relu(self.bn3(self.h2(h2)))  #([72, 128, 8, 1]) 
         h3 = conv_cond_concat(h3,yb)  #([72, 141, 8, 1])
         h3 = conv_prev_concat(h3,h1_prev) #([72, 157, 8, 1])
 
-        h4 = F.relu(batch_norm_2d_cpu(self.h3(h3)))  #([72, 128, 16, 1])
+        h4 = F.relu(self.bn4(self.h3(h3)))  #([72, 128, 16, 1])
         h4 = conv_cond_concat(h4,yb)  #([72, 141, 16, 1])
         h4 = conv_prev_concat(h4,h0_prev) #([72, 157, 16, 1])
 
@@ -90,33 +100,45 @@ class generator(nn.Module):
         self.linear1 = nn.Linear(113,1024)
         self.linear2 = nn.Linear(1037,self.gf_dim*2*2*1)
 
+        self.bn0_prev = nn.BatchNorm2d(16, eps=1e-05, momentum=0.9, affine=True)
+        self.bn1_prev = nn.BatchNorm2d(16, eps=1e-05, momentum=0.9, affine=True)
+        self.bn2_prev = nn.BatchNorm2d(16, eps=1e-05, momentum=0.9, affine=True)
+        self.bn3_prev = nn.BatchNorm2d(16, eps=1e-05, momentum=0.9, affine=True)
+        
+        self.bn2 = nn.BatchNorm2d(128, eps=1e-05, momentum=0.9, affine=True)
+        self.bn3 = nn.BatchNorm2d(128, eps=1e-05, momentum=0.9, affine=True)
+        self.bn4 = nn.BatchNorm2d(128, eps=1e-05, momentum=0.9, affine=True)
+
+        self.bn1d_1 = nn.BatchNorm1d(1024, eps=1e-05, momentum=0.9, affine=True)
+        self.bn1d_2 = nn.BatchNorm1d(256, eps=1e-05, momentum=0.9, affine=True)
+
     def forward(self, z, prev_x, y ,batch_size,pitch_range):
 
-        h0_prev = lrelu(batch_norm_2d(self.h0_prev(prev_x)),0.2)   #[72, 16, 16, 1]
-        h1_prev = lrelu(batch_norm_2d(self.h1_prev(h0_prev)),0.2)  #[72, 16, 8, 1]
-        h2_prev = lrelu(batch_norm_2d(self.h2_prev(h1_prev)),0.2)  #[72, 16, 4, 1]
-        h3_prev = lrelu(batch_norm_2d(self.h3_prev(h2_prev)),0.2)  #[72, 16, 2, 1])
+        h0_prev = lrelu(self.bn0_prev(self.h0_prev(prev_x)),0.2)   #[72, 16, 16, 1]
+        h1_prev = lrelu(self.bn1_prev(self.h1_prev(h0_prev)),0.2)  #[72, 16, 8, 1]
+        h2_prev = lrelu(self.bn2_prev(self.h2_prev(h1_prev)),0.2)  #[72, 16, 4, 1]
+        h3_prev = lrelu(self.bn3_prev(self.h3_prev(h2_prev)),0.2)  #[72, 16, 2, 1])
 
         yb = y.view(batch_size,  self.y_dim, 1, 1)  #(72,13,1,1)
         z = torch.cat((z,y),1)         #(72,113)
 
-        h0 = F.relu(batch_norm_1d(self.linear1(z)))    #(72,1024)
+        h0 = F.relu(self.bn1d_1(self.linear1(z)))    #(72,1024)
         h0 = torch.cat((h0,y),1)   #(72,1037)
 
-        h1 = F.relu(batch_norm_1d(self.linear2(h0)))   #(72, 256)
+        h1 = F.relu(self.bn1d_2(self.linear2(h0)))   #(72, 256)
         h1 = h1.view(batch_size, self.gf_dim * 2, 2, 1)     #(72,128,2,1)
         h1 = conv_cond_concat(h1,yb) #(b,141,2,1)
         h1 = conv_prev_concat(h1,h3_prev)  #(72, 157, 2, 1)
 
-        h2 = F.relu(batch_norm_2d(self.h1(h1)))  #(72, 128, 4, 1)
+        h2 = F.relu(self.bn2(self.h1(h1)))  #(72, 128, 4, 1)
         h2 = conv_cond_concat(h2,yb) #([72, 141, 4, 1])
         h2 = conv_prev_concat(h2,h2_prev)  #([72, 157, 4, 1])
 
-        h3 = F.relu(batch_norm_2d(self.h2(h2)))  #([72, 128, 8, 1]) 
+        h3 = F.relu(self.bn3(self.h2(h2)))  #([72, 128, 8, 1]) 
         h3 = conv_cond_concat(h3,yb)  #([72, 141, 8, 1])
         h3 = conv_prev_concat(h3,h1_prev) #([72, 157, 8, 1])
 
-        h4 = F.relu(batch_norm_2d(self.h3(h3)))  #([72, 128, 16, 1])
+        h4 = F.relu(self.bn4(self.h3(h3)))  #([72, 128, 16, 1])
         h4 = conv_cond_concat(h4,yb)  #([72, 141, 16, 1])
         h4 = conv_prev_concat(h4,h0_prev) #([72, 157, 16, 1])
 
@@ -139,6 +161,11 @@ class discriminator(nn.Module):
         # out channels = df_dim + y_dim
         self.linear1 = nn.Linear(244,self.dfc_dim)
         self.linear2 = nn.Linear(1037,1)
+
+        self.bn1d = nn.BatchNorm1d(1024, eps=1e-05, momentum=0.9, affine=True)
+        self.bn2d = nn.BatchNorm2d(77, eps=1e-05, momentum=0.9, affine=True)
+
+
 
     def forward(self,x,y,batch_size,pitch_range):        
 

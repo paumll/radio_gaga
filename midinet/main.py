@@ -65,9 +65,9 @@ def batch_generator(data, prev_data, chord, batch_size, shuffle=True):
         yield data[batch_idx], prev_data[batch_idx], chord[batch_idx]
 
 def main():
-    is_train = 1
+    is_train = 0
     is_draw = 0
-    is_sample = 0
+    is_sample = 1
     epochs = 20
     lr = 0.00005
 
@@ -269,6 +269,8 @@ def main():
 
         netG = sample_generator(pitch_range)
         netG.load_state_dict(torch.load("../models/netG_{}_epoch10_augmented.pth".format(MODEL_NAME)))
+
+        netG.eval()
 
         output_songs = []
         output_chords = []

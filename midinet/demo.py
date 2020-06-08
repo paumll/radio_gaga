@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import ipdb
-from model_mod import MODEL_NAME
+from model import MODEL_NAME
 
 
 def find_pitch(song,volume=40):   # song shape(128,128), which is (time step, pitch)
