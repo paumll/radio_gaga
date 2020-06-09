@@ -8,7 +8,7 @@ import torchvision.utils as vutils
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from model import *
+from model_mod2 import *
 from ops import *
 from chord_to_emb import *
 
@@ -17,7 +17,7 @@ class get_dataloader(object):
         self.size = data.shape[0]
         self.data = torch.from_numpy(data).float()
         self.prev_data = torch.from_numpy(prev_data).float()
-        self.y   = torch.from_numpy(y).float()
+        self.y   = torch.from_numpy(y).long()
 
          # self.label = np.array(label)
     def __getitem__(self, index):
@@ -36,7 +36,7 @@ def load_data():
     X_tr = np.load('X_tr_augmented.npy')
     prev_X_tr = np.load('prev_X_tr_augmented.npy')
     y_tr    = np.load('chord_tr_augmented.npy')
-    #y_tr = list_chord_to_emb(y_tr)
+    y_tr = list_chord_to_emb(y_tr)
     #print(y_tr.shape)
     X_tr = X_tr[:,:,:,check_range_st:check_range_ed]
     prev_X_tr = prev_X_tr[:,:,:,check_range_st:check_range_ed]
@@ -65,9 +65,9 @@ def batch_generator(data, prev_data, chord, batch_size, shuffle=True):
         yield data[batch_idx], prev_data[batch_idx], chord[batch_idx]
 
 def main():
-    is_train = 0
+    is_train = 1
     is_draw = 0
-    is_sample = 1
+    is_sample = 0
     epochs = 20
     lr = 0.00005
 
