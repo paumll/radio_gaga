@@ -42,3 +42,12 @@ midinet/XML/
 
 # python's bytecode first compilation
 __pycache__
+
+
+midinet/model_mod3.py
+midinet/demo_new.py
+midinet/get_data_new.py
+midinet/main_emb.py
+midinet/main_new.py
+midinet/main_noise.py
+midinet/main_new_mod3.py
