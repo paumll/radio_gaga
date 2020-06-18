@@ -1,5 +1,10 @@
 import numpy as np
 
+'''
+This scripts converts the 13 dimension chord array into 
+a single integer in order to do a future embedding
+'''
+
 def chord_to_emb(vect):
     try:
         position = np.argwhere(vect == 1)[0][0]
