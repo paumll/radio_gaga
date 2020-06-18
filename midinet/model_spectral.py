@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
+from torch.nn.utils import spectral_norm
 import torch.optim as optim
 import ipdb
 import matplotlib
@@ -10,8 +11,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from ops import *
 
-
-MODEL_NAME = 'modelo1_4c_lr0.0002'
+MODEL_NAME = 'Spectral_dual_lr0.0002'
 
 class sample_generator(nn.Module):
     def __init__(self, pitch_range):
@@ -20,15 +20,15 @@ class sample_generator(nn.Module):
         self.y_dim   = 13
         self.n_channel = 256
 
-        self.h1      = nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2))
-        self.h2      = nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2))
-        self.h3      = nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2))
-        self.h4      = nn.ConvTranspose2d(in_channels=157, out_channels=1, kernel_size=(1,pitch_range), stride=(1,2))
+        self.h1      = spectral_norm(nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2)))
+        self.h2      = spectral_norm(nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2)))
+        self.h3      = spectral_norm(nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2)))
+        self.h4      = spectral_norm(nn.ConvTranspose2d(in_channels=157, out_channels=1, kernel_size=(1,pitch_range), stride=(1,2)))
 
-        self.h0_prev = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(1,pitch_range), stride=(1,2))
-        self.h1_prev = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2))
-        self.h2_prev = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2))
-        self.h3_prev = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2))
+        self.h0_prev = spectral_norm(nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(1,pitch_range), stride=(1,2)))
+        self.h1_prev = spectral_norm(nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2)))
+        self.h2_prev = spectral_norm(nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2)))
+        self.h3_prev = spectral_norm(nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2)))
 
         self.linear1 = nn.Linear(113,1024)
         self.linear2 = nn.Linear(1037,self.gf_dim*2*2*1)
@@ -88,15 +88,15 @@ class generator(nn.Module):
         self.y_dim   = 13
         self.n_channel = 256
 
-        self.h1      = nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2))
-        self.h2      = nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2))
-        self.h3      = nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2))
-        self.h4      = nn.ConvTranspose2d(in_channels=157, out_channels=1, kernel_size=(1,pitch_range), stride=(1,2))
+        self.h1      = spectral_norm(nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2)))
+        self.h2      = spectral_norm(nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2)))
+        self.h3      = spectral_norm(nn.ConvTranspose2d(in_channels=157, out_channels=pitch_range, kernel_size=(2,1), stride=(2,2)))
+        self.h4      = spectral_norm(nn.ConvTranspose2d(in_channels=157, out_channels=1, kernel_size=(1,pitch_range), stride=(1,2)))
 
-        self.h0_prev = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(1,pitch_range), stride=(1,2))
-        self.h1_prev = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2))
-        self.h2_prev = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2))
-        self.h3_prev = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2))
+        self.h0_prev = spectral_norm(nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(1,pitch_range), stride=(1,2)))
+        self.h1_prev = spectral_norm(nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2)))
+        self.h2_prev = spectral_norm(nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2)))
+        self.h3_prev = spectral_norm(nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(2,1), stride=(2,2)))
 
         self.linear1 = nn.Linear(113,1024)
         self.linear2 = nn.Linear(1037,self.gf_dim*2*2*1)
@@ -156,45 +156,39 @@ class discriminator(nn.Module):
         self.dfc_dim = 1024
         self.y_dim = 13
 
-        self.h0_prev = nn.Conv2d(in_channels=14, out_channels=14, kernel_size=(4,pitch_range), stride=(1,1))
-        self.h1_prev = nn.Conv2d(in_channels=14, out_channels=24, kernel_size=(4,1), stride=(1,1))
-        self.h2_prev = nn.Conv2d(in_channels=37, out_channels=51, kernel_size=(4,1), stride=(1,1))
-        self.h3_prev = nn.Conv2d(in_channels=51, out_channels=77, kernel_size=(4,1), stride=(1,1))
-        
-        self.linear1 = nn.Linear(308,self.dfc_dim)
+        self.h0_prev = spectral_norm(nn.Conv2d(in_channels=14, out_channels=14, kernel_size=(2,pitch_range), stride=(2,2)))
+        #out channels = y_dim +1 
+        self.h1_prev = spectral_norm(nn.Conv2d(in_channels=27, out_channels=77, kernel_size=(4,1), stride=(2,2)))
+        # out channels = df_dim + y_dim
+        self.linear1 = nn.Linear(244,self.dfc_dim)
         self.linear2 = nn.Linear(1037,1)
 
-        self.bn0 = nn.BatchNorm2d(14, eps=1e-05, momentum=0.9, affine=True)
-        self.bn1 = nn.BatchNorm2d(24, eps=1e-05, momentum=0.9, affine=True)
-        self.bn2 = nn.BatchNorm2d(51, eps=1e-05, momentum=0.9, affine=True)
-        self.bn3 = nn.BatchNorm2d(77, eps=1e-05, momentum=0.9, affine=True)
-
-        self.bn1d = nn.BatchNorm1d(1024, eps = 1e-05, momentum=0.9, affine=True)
+        self.bn1d = nn.BatchNorm1d(1024, eps=1e-05, momentum=0.9, affine=True)
+        self.bn2d = nn.BatchNorm2d(77, eps=1e-05, momentum=0.9, affine=True)
 
         self.lrelu = nn.LeakyReLU(0.2)
         self.sigmoid = nn.Sigmoid()
+
 
     def forward(self,x,y,batch_size,pitch_range):        
 
         yb = y.view(batch_size,self.y_dim, 1, 1)
         x = conv_cond_concat(x, yb)  #x.shape torch.Size([72, 14, 16, 128])
         
-        h0 = self.lrelu(self.h0_prev(x)) # h0 shape: [72, 14, 13, 1]
+        h0 = lrelu(self.h0_prev(x),0.2) # h0 shape: [72, 14, 8, 1]
         fm = h0
+        h0 = conv_cond_concat(h0, yb) #torch.Size([72, 27, 8, 1])
 
-        h1 = self.lrelu(self.bn1(self.h1_prev(h0)))  #torch.Size([72, 24, 10, 1])
-        h1 = conv_cond_concat(h1,yb)  #torch.Size([72, 37, 10, 1])
+        h1 = self.lrelu(self.bn2d(self.h1_prev(h0)))  #torch.Size([72, 77, 3, 1])
+        h1 = h1.view(batch_size, -1)  #torch.Size([72, 231])
+        h1 = torch.cat((h1,y),1)  #torch.Size([72, 244])
 
-        h2 = self.lrelu(self.bn2(self.h2_prev(h1))) # [72, 51, 7, 1]
+        h2 = self.lrelu(self.bn1d(self.linear1(h1)))
+        h2 = torch.cat((h2,y),1)  #torch.Size([72, 1037])
 
-        h3 = self.lrelu(self.bn3(self.h3_prev(h2))) # [72, 77, 4, 1]
-        h3 = h3.view(batch_size, -1)
-        
-        h4 = self.lrelu(self.bn1d(self.linear1(h3)))
-        h4 = torch.cat((h4,y),1)
-        h5 = self.linear2(h4)
+        h3 = self.linear2(h2)
+        h3_sigmoid = self.sigmoid(h3)
 
-        h5_sigmoid = self.sigmoid(h5)
 
-        return h5_sigmoid, h5, fm
+        return h3_sigmoid, h3, fm
 

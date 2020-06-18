@@ -8,7 +8,7 @@ import torchvision.utils as vutils
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from model_mod2 import *
+from model import *
 from ops import *
 from chord_to_emb import *
 
@@ -17,9 +17,10 @@ class get_dataloader(object):
         self.size = data.shape[0]
         self.data = torch.from_numpy(data).float()
         self.prev_data = torch.from_numpy(prev_data).float()
-        self.y   = torch.from_numpy(y).long()
 
-         # self.label = np.array(label)
+        # Change the float type to long if you want to use an embedding model
+        self.y   = torch.from_numpy(y).float()
+
     def __getitem__(self, index):
         return self.data[index],self.prev_data[index], self.y[index]
 
@@ -31,59 +32,47 @@ def load_data():
     check_range_st = 0
     check_range_ed = 129
     pitch_range = check_range_ed - check_range_st-1
-    # print('pitch range: {}'.format(pitch_range))
 
     X_tr = np.load('X_tr_augmented.npy')
     prev_X_tr = np.load('prev_X_tr_augmented.npy')
     y_tr    = np.load('chord_tr_augmented.npy')
-    y_tr = list_chord_to_emb(y_tr)
-    #print(y_tr.shape)
+    
+    # uncomment the following line if you want to use an embedding model
+    #y_tr = list_chord_to_emb(y_tr)
+    
     X_tr = X_tr[:,:,:,check_range_st:check_range_ed]
     prev_X_tr = prev_X_tr[:,:,:,check_range_st:check_range_ed]
 
-    #test data shape(5048, 1, 16, 128)
-    #train data shape(45448, 1, 16, 128)
-
     train_iter = get_dataloader(X_tr,prev_X_tr,y_tr)
-    #kwargs = {'num_workers': 4, 'pin_memory': True}# if args.cuda else {}
-    train_loader = DataLoader(
-                   train_iter, batch_size=72, shuffle=True) #**kwargs)
+    train_loader = DataLoader(train_iter, batch_size=72, shuffle=True)
 
     print('data preparation is completed')
     #######################################
     return train_loader
 
-def batch_generator(data, prev_data, chord, batch_size, shuffle=True):
-    nsamples = len(data)
-    if shuffle:
-        perm = np.random.permutation(nsamples)
-    else:
-        perm = range(nsamples)
-
-    for i in range(0, nsamples, batch_size):
-        batch_idx = perm[i:i+batch_size]
-        yield data[batch_idx], prev_data[batch_idx], chord[batch_idx]
 
 def main():
-    is_train = 1
+    is_train = 0
     is_draw = 0
-    is_sample = 0
+    is_sample = 1
     epochs = 20
-    lr = 0.00005
+    lr = 0.0002
 
     check_range_st = 0
     check_range_ed = 129
     pitch_range = check_range_ed - check_range_st-1
     
     device = torch.device('cuda')
-    train_loader = load_data()
 
     if is_train == 1 :
+        train_loader = load_data()
+        
         netG = generator(pitch_range).to(device)
         netD = discriminator(pitch_range).to(device)  
 
         netD.train()
         netG.train()
+        
         optimizerD = optim.Adam(netD.parameters(), lr=lr, betas=(0.5, 0.999))
         optimizerG = optim.Adam(netG.parameters(), lr=lr, betas=(0.5, 0.999)) 
              
@@ -201,7 +190,7 @@ def main():
                             % (epoch, epochs, i, len(train_loader),
                                 errD, errG, D_x, D_G_z1, D_G_z2))
 
-            if epoch % 5 == 0:
+            if (epoch+1) % 5 == 0:
                 vutils.save_image(real_cpu,
                         "file/real_samples.png",
                         normalize=True)
@@ -210,9 +199,9 @@ def main():
                         "file/fake_samples_epoch_{}.png".format(epoch),
                         normalize=True)
 
-            if epoch == 10:
-                torch.save(netG.state_dict(), "../models/netG_{}_epoch{}_augmented.pth".format(MODEL_NAME,epoch))
-                torch.save(netD.state_dict(), "../models/netD_{}_epoch{}_augmented.pth".format(MODEL_NAME,epoch))
+                # Checkpoint every 5 epochs
+                torch.save(netG.state_dict(), "../models/netG_{}_epoch{}_augmented.pth".format(MODEL_NAME,epoch+1))
+                torch.save(netD.state_dict(), "../models/netD_{}_epoch{}_augmented.pth".format(MODEL_NAME,epoch+1))
 
             average_lossD = (sum_lossD / len(train_loader.dataset))
             average_lossG = (sum_lossG / len(train_loader.dataset))
@@ -233,10 +222,6 @@ def main():
         np.save("file/lossG_{}_list_all.npy".format(MODEL_NAME),lossG_list_all)
         np.save("file/D_x_{}_list.npy".format(MODEL_NAME),D_x_list)
         np.save("file/D_G_z_{}_list.npy".format(MODEL_NAME),D_G_z_list)
-        
-        # do checkpointing
-        torch.save(netG.state_dict(), "../models/netG_{}_epoch{}_augmented.pth".format(MODEL_NAME,epoch))
-        torch.save(netD.state_dict(), "../models/netD_{}_epoch{}_augmented.pth".format(MODEL_NAME,epoch))
 
     if is_draw == 1:
         lossD_print = np.load('lossD_list.npy')
@@ -258,17 +243,17 @@ def main():
         batch_size = 8
         nz = 100
         n_bars = 7
-        X_te = np.load('X_te.npy')
-        prev_X_te = np.load('prev_X_te.npy')
+        X_te = np.load('X_te_augmented.npy')
+        prev_X_te = np.load('prev_X_te_augmented.npy')
         prev_X_te = prev_X_te[:,:,check_range_st:check_range_ed,:]
-        y_te    = np.load('chord_te.npy')
+        y_te    = np.load('chord_te_augmented.npy')
        
         test_iter = get_dataloader(X_te,prev_X_te,y_te)
-        #kwargs = {'num_workers': 4, 'pin_memory': True}# if args.cuda else {}
-        test_loader = DataLoader(test_iter, batch_size=batch_size, shuffle=False) #**kwargs)
+        
+        test_loader = DataLoader(test_iter, batch_size=batch_size, shuffle=False)
 
         netG = sample_generator(pitch_range)
-        netG.load_state_dict(torch.load("../models/netG_{}_epoch10_augmented.pth".format(MODEL_NAME)))
+        netG.load_state_dict(torch.load("../models/netG_{}_epoch19_augmented.pth".format(MODEL_NAME)))
 
         netG.eval()
 
@@ -294,14 +279,11 @@ def main():
                 sample = netG(z, prev, y, 1,pitch_range)
                 list_song.append(sample)
                 list_chord.append(y.numpy())
-                print(y.shape)
 
-            print('num of output_songs: {}'.format(len(output_songs)))
             output_songs.append(list_song)
             output_chords.append(list_chord)
-        print(np.asarray(output_chords).shape)
-        np.save("output_{}_songs_augmented_10.npy".format(MODEL_NAME),np.asarray(output_songs))
-        np.save("output_{}_chords_augmented_10.npy".format(MODEL_NAME),np.asarray(output_chords))
+        np.save("output_{}_songs_augmented_19.npy".format(MODEL_NAME),np.asarray(output_songs))
+        np.save("output_{}_chords_augmented_19.npy".format(MODEL_NAME),np.asarray(output_chords))
 
         print('creation completed, check out what I make!')
 

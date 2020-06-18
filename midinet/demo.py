@@ -6,7 +6,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import ipdb
-from model import MODEL_NAME
+from model_mod4 import MODEL_NAME
+import random
 
 
 def find_pitch(song,volume=40):   # song shape(128,128), which is (time step, pitch)
@@ -30,7 +31,7 @@ def reshape_bar(song):
     return eight_bar
 
 def make_a_track(eight_bar_binarized,track_name ='melody',instrument=0):
-    track = Track(pianoroll=eight_bar_binarized, program=instrument, is_drum=False)#name=track_name)
+    track = Track(pianoroll=eight_bar_binarized, program=instrument, is_drum=False)
     return track
 
 def make_a_demo(track1,track2,song_idx):
@@ -38,8 +39,6 @@ def make_a_demo(track1,track2,song_idx):
 
     multitrack = Multitrack(tracks=[track1,track2], tempo=120.0,beat_resolution=4)
     return multitrack
-    # pypiano.plot(multitrack, filepath='your file situation', mode='separate', preset='default', cmaps=None, xtick='auto', ytick='octave', xticklabel=True, yticklabel='auto', tick_loc=None, tick_direction='in', label='both', grid='both', grid_linestyle=':', grid_linewidth=0.5)
-    # plt.savefig('your file situation'+sample_name+'.png')
 
 
 def chord_list(chord,idx):
@@ -106,47 +105,31 @@ def make_chord_track(chord,instrument,volume=40):
 
 
 def main():
-    data = np.load("output_{}_songs_augmented_10.npy".format(MODEL_NAME), allow_pickle=True)
-    chord = np.load("output_{}_chords_augmented_10.npy".format(MODEL_NAME), allow_pickle=True)
-    print(chord.shape)
+    data = np.load("output_{}_songs_augmented_19.npy".format(MODEL_NAME), allow_pickle=True)
+    chord = np.load("output_{}_chords_augmented_19.npy".format(MODEL_NAME), allow_pickle=True)
+
     instrument = int(input('which instrument you want to play? from 0 to 128, default = 0: '))
     volume     = int(input('how loud you want to play? from 1 to 127, default = 40: '))
 
-    for i in range(data.shape[0]):
-        if i % 50 == 0:
-            one_song = data[i]
-            song = []
-            for item in one_song:
-                item = item.detach().numpy()
-                item = item.reshape(16,128)
-                song.append(item)
+    for i in random.sample(range(data.shape[0]), 4):
+        one_song = data[i]
+        song = []
+        for item in one_song:
+            item = item.detach().numpy()
+            item = item.reshape(16,128)
+            song.append(item)
 
-            eight_bar = reshape_bar(song)
-            eight_bar_binarized = find_pitch(eight_bar,volume)
-            track = make_a_track(eight_bar_binarized,instrument)
-            
-            print(chord.shape)
-            song_chord = chord_list(chord,i)
-            chord_player = get_chord(song_chord)
-            np.save("file/{}chord_{}.npy".format(MODEL_NAME,i),chord_player)
-            chord_track = make_chord_track(chord_player,instrument,volume)
-            a = make_a_demo(track,chord_track,i)
-            pypiano.write(a, "{}_augmented_10epoch_{}.mid".format(MODEL_NAME,i))
-            print('saved')
-
-
-
+        eight_bar = reshape_bar(song)
+        eight_bar_binarized = find_pitch(eight_bar,volume)
+        track = make_a_track(eight_bar_binarized,instrument)
+        
+        song_chord = chord_list(chord,i)
+        chord_player = get_chord(song_chord)
+        chord_track = make_chord_track(chord_player,instrument,volume)
+        a = make_a_demo(track,chord_track,i)
+        pypiano.write(a, "{}_augmented_19epoch_{}.mid".format(MODEL_NAME,i))
+        print('saved')
 
 
 if __name__ == "__main__" :
-
     main()
-
-
-
-
-
-
-
-
-
