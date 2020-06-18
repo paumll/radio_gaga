@@ -1,24 +1,14 @@
 
-This is an Implementation of MidiNet by pytorch.
+This folder includes several changes to the PyTorch [implementation](https://github.com/annahung31/MidiNet-by-pytorch) of [MidiNet](https://arxiv.org/abs/1703.10847).
 
-MidiNet paper : https://arxiv.org/abs/1703.10847 
-
-MidiNet code  : https://github.com/RichardYang40148/MidiNet 
-
-dataset is from theorytab : https://www.hooktheory.com/theorytab 
-
-You can find crawler here : https://github.com/wayne391/Symbolic-Musical-Datasets 
-
-
-
+The dataset is from [theorytab](https://www.hooktheory.com/theorytab) and can be downloaded [here](https://github.com/wayne391/Lead-Sheet-Dataset).
 
 --------------------------------------------------------------------------------------------------
 Prepare the data
 
-get_data.py                     |  get melody and chord matrix from xml
+get_data.py                     |  get melody and chord matrix from xml and json files
 
-
-get_train_and_test_data.py      |  seperate the melody data into training set and testing set (chord preparation not included)
+get_train_and_test_data.py      |  seperate the melody and chord data into training set and testing set
 
 --------------------------------------------------------------------------------------------------
 After you have the data, 
@@ -32,16 +22,5 @@ After you have the data,
   Run demo.py
 
 --------------------------------------------------------------------------------------------------
-requirement.py                  |  toolkits used in the whole work
 
-main.py                         |  training setting, drawing setting, generation setting.
-
-ops.py                          |  some functions used in model
-
-model.py                        |  Generator and Discriminator.   (Based on model 3 in the MidiNet paper)
-
-demo.py                         |  transform matrix into midi. (input : melody and chord matrix, output : midi)
-
-
-
-
+We have included several models, which can be called from `main.py` simply changing the model to import.
