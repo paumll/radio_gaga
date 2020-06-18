@@ -14,16 +14,10 @@ def get_sample(cur_song, cur_dur,n_ratio, dim_pitch, dim_bar, cancion):
     sd = 0
     ed = 0
     song_sample=[]
-    
-    if cancion == 1528:
-        print("Total notas shakira: {}".format(len(cur_song)))
+
     while idx < len(cur_song):
-        
         cur_pitch = cur_song[idx]-1
-        if cancion == 1528:
-            print(cur_pitch)
         ed = int(ed + cur_dur[idx]*n_ratio)
-        # print('pitch: {}, sd:{}, ed:{}'.format(cur_pitch, sd, ed))
         if ed <dim_bar:
             cur_bar[0,cur_pitch,sd:ed]=1
             sd = ed
@@ -34,50 +28,8 @@ def get_sample(cur_song, cur_dur,n_ratio, dim_pitch, dim_bar, cancion):
             cur_bar =np.zeros((1,dim_pitch,dim_bar),dtype=int)
             sd = 0
             ed = 0
-            # print(cur_bar)
-            # print(song_sample)
-        # if idx == len(cur_song)-1 and np.sum(cur_bar)!=0:
-        #     song_sample.append(cur_bar)
+
     return song_sample
-
-def build_matrix2(note_list_all_c,dur_list_all_c, c_files):
-    data_x = []           
-    prev_x = []
-    zero_counter = 0
-    for i in range(len(note_list_all_c)):
-        if i == 26:
-            print("This song is: {}".format(c_files[i]))
-            song = note_list_all_c[i]
-            dur = dur_list_all_c[i]
-            song_sample = get_sample(song,dur,4,128,128)
-            print(type(song_sample))
-            print(song_sample)
-            np_sample = np.asarray(song_sample)
-            print(np_sample.shape)
-            if len(np_sample) == 0:
-                zero_counter +=1
-            if len(np_sample) != 0:
-                np_sample =np_sample[0]
-                np_sample = np_sample.reshape(1,1,128,128)
-
-                if np.sum(np_sample) != 0:
-                    place = np_sample.shape[3]
-                    new=[]
-                    for i in range(0,place,16):
-                        new.append(np_sample[0][:,:,i:i+16])
-                    new = np.asarray(new)  # (2,1,128,128) will become (16,1,128,16)
-                    print(np_sample.shape)
-                    print(new.shape)
-                    new_prev = np.zeros(new.shape,dtype=int)
-                    new_prev[1:, :, :, :] = new[0:new.shape[0]-1, :, :, :]            
-                    data_x.append(new)
-                    prev_x.append(new_prev)  
-
-    data_x = np.vstack(data_x)
-    prev_x = np.vstack(prev_x)
-
-
-    return data_x,prev_x,zero_counter
 
 def build_matrix(note_list_all_c,dur_list_all_c, chord_list_all):
     data_x = []           
@@ -85,23 +37,18 @@ def build_matrix(note_list_all_c,dur_list_all_c, chord_list_all):
     chords = []
     zero_counter = 0
     for i in range(len(note_list_all_c)):
-        #if i < len(c_files):
-            #print("This song is: {}".format(c_files[i]))
+
         song = note_list_all_c[i]
         dur = dur_list_all_c[i]
         song_sample = get_sample(song,dur,4,128,128, i)
         song_chord = chord_list_all[i]
-        #print('Total of chords in song: {}'.format(len(song_chord)))
-        #print(type(song_sample))
-        #print(song_sample)
+
         np_sample = np.asarray(song_sample)
         
         if len(song_sample)*8 > len(song_chord):
-            #print("Canción: {}, idx: {}".format(list_files[i], i))
-            print("Num compases: {}, acordes: {}".format(len(song_sample), len(song_chord)))
+            # The number of chords do not correspond with the number of bars
             continue
-        #if i < len(c_files):
-            #print("Shape of np_sample: {}".format(np_sample.shape))
+
         if len(np_sample) == 0:
             zero_counter +=1
         if len(np_sample) != 0:
@@ -113,24 +60,18 @@ def build_matrix(note_list_all_c,dur_list_all_c, chord_list_all):
                     new=[]
                     for j in range(0,place,16):
                         new.append(sample[0][:,:,j:j+16])
-                    new = np.asarray(new)  # (2,1,128,128) will become (16,1,128,16)
+                    new = np.asarray(new)
                     
                     new_chord = song_chord[chunk:chunk+8]
                     chunk += 8
                     new_chord = np.asarray(new_chord)
 
-                                      #print(sample.shape)
-                    
-                    #print(new.shape)
+
                     new_prev = np.zeros(new.shape,dtype=int)
                     new_prev[1:, :, :, :] = new[0:new.shape[0]-1, :, :, :]            
                     data_x.append(new)
                     prev_x.append(new_prev)
                     chords.append(new_chord)
-    '''
-    for chord in chords:
-        if len(chord) != 13:
-            print(chord.shape)'''
 
     data_x = np.vstack(data_x)
     prev_x = np.vstack(prev_x)
@@ -203,7 +144,6 @@ def transform_note(c_key_list,d_key_list,e_key_list,f_key_list,g_key_list,a_key_
     a_files = []
     b_files = []
     appends = 0
-    print("comienzo keys\nc: {}\nd:{}\ne:{}\nf:{}\ng:{}\na:{}\nb:{}".format(len(c_key_list), len(d_key_list), len(e_key_list), len(f_key_list), len(g_key_list), len(a_key_list), len(b_key_list)))
     for file_ in c_key_list:
         note_list = [file_]
         dur_list = [file_]  
@@ -540,13 +480,10 @@ def transform_note(c_key_list,d_key_list,e_key_list,f_key_list,g_key_list,a_key_
             #print('b key but no melody/notes :{}'.format(file_))
             fails += 1
    
-    #print("han habido {} appends".format(appends))
-    #print("acabo keys\nc: {}\nd:{}\ne:{}\nf:{}\ng:{}\na:{}\nb:{}".format(len(note_c), len(note_d), len(note_e), len(note_f), len(note_g), len(note_a), len(note_b)))
-    #print(fails)
+
     note_list_all = note_c + note_d + note_e + note_f + note_g + note_a + note_b
     dur_list_all = dur_c + dur_d + dur_e  + dur_f + dur_g + dur_a  + dur_b
     file_list_all = c_files + d_files + e_files + f_files + g_files + a_files + b_files
-    #print("Note list all: {}, dur list all: {}, file list all: {}".format(len(note_list_all), len(dur_list_all), len(file_list_all)))
     return note_list_all,dur_list_all, file_list_all
 
 def get_key(list_of_four_beat):
@@ -580,13 +517,7 @@ def get_key(list_of_four_beat):
                 b_key_list.append(file_)                            
         except:
             print('file broken')
-    # print('A key: {}'.format(key_list.count('A')))
-    # print('B key: {}'.format(key_list.count('B')))
-    # print('C key: {}'.format(key_list.count('C')))
-    # print('D key: {}'.format(key_list.count('D')))
-    # print('E key: {}'.format(key_list.count('E')))
-    # print('F key: {}'.format(key_list.count('F')))
-    # print('G key: {}'.format(key_list.count('G')))
+
     return c_key_list,d_key_list,e_key_list,f_key_list,g_key_list,a_key_list,b_key_list
 
 def beats_(list_):
@@ -622,9 +553,6 @@ def check_chord_type(list_file):
                 counter +=1
                 if item.text == None:
                     None_counter +=1
-            #print(check_list)
-            #print(counter)
-            #print(None_counter)
             if counter == None_counter :
                 list_.append(file_)
         except:
@@ -633,7 +561,11 @@ def check_chord_type(list_file):
 
 
 def multiples_interval(interval):
-    # interval tuple of float
+    '''
+    Computes the number of multiples of four in an interval
+
+    The interval is a tuple of two float numbers
+    '''
     low = ceil(interval[0])
     up = ceil(interval[1])
     multiples = 0
@@ -669,7 +601,9 @@ def get_chord(list_file):
 
 
 def get_listfile(dataset_path):
-
+    '''
+    Returns a list of XML files containing the chorus
+    '''
     list_file=[]
 
     for root, dirs, files in os.walk(dataset_path):    
@@ -680,8 +614,11 @@ def get_listfile(dataset_path):
 
     return list_file
 
-def get_jsonfiles(dataset_path):
 
+def get_jsonfiles(dataset_path):
+    '''
+    Returns a list of json files with the chorus in C key
+    '''
     list_file=[]
 
     for root, dirs, files in os.walk(dataset_path):    
@@ -693,6 +630,10 @@ def get_jsonfiles(dataset_path):
     return list_file
 
 def xml2json(list_file):
+    '''
+    Given a list of xml files, returns its 
+    corresponding list of json files in C key
+    '''
     json_files = []
     new_list_file = []
     for file in list_file:
@@ -701,6 +642,9 @@ def xml2json(list_file):
     return json_files
 
 def prune_json(list_file):
+    '''
+    Checks that all the XML files have their corresponding json
+    '''
     new_list_file = []
     for file in list_file:
         json_path = '..\\..\\datasets\\event\\' + '\\'.join(file.split('\\')[4:-1]) + '\\chorus_symbol_nokey.json'
@@ -709,31 +653,33 @@ def prune_json(list_file):
     return new_list_file
 
 def data_augmentation(data, prev, chords):
-    # data shape: [13987, 1, 128, 16]
+    '''
+    Data augmentation based on circular shifting
+    '''
     new_data = []
     new_prev = []
     new_chords = []
     for i in range(len(data)):
-        print("Canción {} aumentada".format(i))
         try:
-            it = np.argwhere(chords[i,:-1] == 1)[0][0] # nos quedamos con el primer 1
+            it = np.argwhere(chords[i,:-1] == 1)[0][0] # iterable to detect the chord
             for key in range(6):
+                # Increase note pitch
                 temp = np.zeros((1,128,16))
                 temp[0, (key+1):] = data[i, 0, :-(key+1)]
                 new_data.append(temp)
-                #print("hago new_Data concatenate: ", new_data.shape)
-
+                
                 temp_prev = np.zeros((1,128,16))
                 temp_prev[0, (key+1):] = prev[i, 0, :-(key+1)]
                 new_prev.append(temp_prev)
-                #print("hago new_prev concatenate: ", new_prev.shape)
+                
 
                 temp_chord = np.zeros(13)
-                temp_chord[-1] = chords[i, -1]
+                temp_chord[-1] = chords[i, -1]           
                 it += (key+1)
                 temp_chord[it%12] = 1
                 new_chords.append(temp_chord)
-                if key < 5:
+
+                if key < 5: # Decrease note pitch
                     temp[0, :-(key+1)] = data[i, 0, (key+1):]
                     new_data.append(temp)
 
@@ -750,30 +696,8 @@ def data_augmentation(data, prev, chords):
             continue
     return np.vstack((data, new_data)), np.vstack((prev, new_prev)), np.vstack((chords, new_chords))
 
-def data_augmentation_chords(data):
-    new_data = []
-    for chord in data:
-        it = np.argwhere(chord[:-1] == 1)[0][0] # nos quedamos con el primer 1
-        for key in range(6):
-            # subimos
-            temp = np.zeros(13)
-            temp[-1] = chord[-1]
-            it += (key+1)
-            temp[it%12] = 1
-            new_data.append(temp)
-            if key < 5:
-            # bajamos
-                it -= 2*(key+1)
-                temp = np.zeros(13)
-                temp[-1] = chord[-1]
-                temp[it%12] = 1
-                new_data.append(temp)
-                it += (key+1)
-    return np.vstack(new_data)
-
-
 def main():
-    is_get_data = 0
+    is_get_data = 1
     is_get_matrix = 1
     if is_get_data == 1:
         a = '..\\..\\datasets\\xml\\'
@@ -782,20 +706,13 @@ def main():
         list_file = prune_json(list_file)
         list_of_four_beat = beats_(list_file)
 
-        #print("Total antes get_key: {}".format(len(list_of_four_beat)))
-
         c_key_list,d_key_list,e_key_list,f_key_list,g_key_list,a_key_list,b_key_list = get_key(list_of_four_beat)
-
-        #print("Total desp get_key: {}".format(len(c_key_list) + len(d_key_list) + len(e_key_list) + len(f_key_list) + len(g_key_list) + len(a_key_list) + len(b_key_list)))
 
         note_list_all,dur_list_all, list_files = transform_note(c_key_list,d_key_list,e_key_list,f_key_list,g_key_list,a_key_list,b_key_list)
         in_range,note_list_all_c,dur_list_all_c, list_files = check_melody_range(note_list_all,dur_list_all, list_files)
-
-        #print("total de files según list_file: {}, total según melody: {}".format(len(list_files), len(note_list_all_c)))
         
         json_files = xml2json(list_files)
         chords = get_chord(json_files)
-        #print('total normal chord: {}'.format(len(list_)))
         print('total in four: {}'.format(len(list_of_four_beat)))
         print('melody in range: {}'.format(len(note_list_all)))
         print('total chords: {}'.format(len(chords)))
@@ -811,19 +728,14 @@ def main():
         np.save('data_x.npy',data_x)
         np.save('prev_x.npy',prev_x)
         np.save('chords.npy', chords)
-        print("hacemos data augmentation")
+
         data_x, prev_x, chords = data_augmentation(data_x, prev_x, chords)
+        print("Data augmentation completed")
         print('sample shape: {}, prev sample shape: {}'.format(data_x.shape, prev_x.shape))
         print('Chord shape: {}'.format(chords.shape))
-        #chords = build_chords(list_all_chord, data_x)
         np.save('data_x_augmented.npy',data_x)
         np.save('prev_x_augmented.npy',prev_x)
         np.save('chords_augmented.npy', chords)
-        '''
-        print('final tab num: {}'.format(len(note_list_all_c)))
-        print('songs not long enough: {}'.format(zero_counter))
-        print('sample shape: {}, prev sample shape: {}'.format(data_x.shape, prev_x.shape))
-        print('Chord shape: {}'.format(chords.shape))'''
     
 if __name__ == "__main__" :
 

@@ -8,7 +8,6 @@ data = np.load('data_x_augmented.npy')
 prev_data = np.load('prev_x_augmented.npy')
 chord_data = np.load('chords_augmented.npy')
 print('data shape: {}'.format(data.shape))
-#time.sleep(3)
 
 song_idx = int(data.shape[0]/8)
 test_ratial = 0.1
@@ -42,7 +41,6 @@ def test_data(data,test_idx):
         print(song.shape)
         song = song.transpose(0, 1, 3, 2)
         X_te.append(song)
-        # print('i: {}, test_iex: {}, stp: {}, song.shape: {}, song num: {}'.format(i, test_idx[i], stp, song.shape, len(X_te)))
         
     X_te = np.vstack(X_te)
     return X_te
@@ -58,7 +56,6 @@ def train_data(data,train_idx):
         song = data[stp:edp]
         song = song.transpose(0, 1, 3, 2)
         X_tr.append(song)
-        # print('i: {}, train_iex: {}, stp: {}, song.shape: {}, song num: {}'.format(i, train_idx[i], stp, song.shape, len(X_tr)))
 
     X_tr = np.vstack(X_tr)
     return X_tr
