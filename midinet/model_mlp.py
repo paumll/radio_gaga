@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
-from torch.nn.utils import spectral_norm
 import torch.optim as optim
 import ipdb
 import matplotlib
@@ -11,7 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from ops import *
 
-MODEL_NAME = 'kaggle_Spectral_mlp_lr_0.0002_dropout'
+MODEL_NAME = 'mlp_lr_0.0002_dropout'
 
 class sample_generator(nn.Module):
     def __init__(self, pitch_range):
@@ -160,8 +159,8 @@ class discriminator(nn.Module):
         self.dfc_dim = 1024
         self.y_dim = 13
 
-        self.h0_prev = spectral_norm(nn.Conv2d(in_channels=14, out_channels=14, kernel_size=(2,pitch_range), stride=(2,2)))
-        self.h1_prev = spectral_norm(nn.Conv2d(in_channels=27, out_channels=77, kernel_size=(4,1), stride=(2,2)))
+        self.h0_prev = nn.Conv2d(in_channels=14, out_channels=14, kernel_size=(2,pitch_range), stride=(2,2))
+        self.h1_prev = nn.Conv2d(in_channels=27, out_channels=77, kernel_size=(4,1), stride=(2,2))
 
         self.linear1 = nn.Linear(244,self.dfc_dim)
         self.linear2 = nn.Linear(128,1)
